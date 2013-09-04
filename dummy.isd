@@ -1,0 +1,88 @@
+
+#include "listview.iss"
+
+[Code]
+type
+  TDummyPage = record
+    page: TOutputMsgPage;
+    listView: TWinListView;
+  end;
+  Package = record
+    dummyPage: TDummyPage;
+    {Other setup attributes and state variables}
+  end;
+var
+  Pkg: Package;
+
+{Return False to disallow changing specified item's state}
+function DummyTestPage_OnItemChanging(data: TLVData; lvn: TNMLISTVIEW): Boolean;
+begin
+  Result := True;
+  {Disable selection of the 2nd item by returning False}
+  if lvn.iItem = 1 then begin
+    Result := False;
+    Log('DummyTestPage:OnItemChanging: disallow selection');
+  end;
+end;
+
+function SomeConditionThatDependsOnSpecificItem(item: Integer): Boolean;
+begin
+  {Implement some condition to check for listview items upon selection}
+  Result := True
+end;
+
+procedure DummyTestPage_OnClick(data: TLVData; lvn: TNMLISTVIEW);
+begin
+  WizardForm.NextButton.Enabled := False
+  {As an example: if an item is being selected, enable/disable Next button depending
+   on a specific condition}
+  if ((lvn.uNewState and LVIS_SELECTED) = LVIS_SELECTED) then
+    WizardForm.NextButton.Enabled := SomeConditionThatDependsOnSpecificItem(lvn.iItem)
+end;
+
+procedure DummyTestPage_OnActivate(sender: TWizardPage);
+begin
+  {This is required to display the list view initially}
+  ShowWindow(Pkg.dummyPage.listView.data.handle, SW_SHOW);
+end;
+
+function DummyTestPage_Create(id: Integer): Integer;
+var
+  rc: TWinRect;
+begin
+  Pkg.dummyPage.page := CreateOutputMsgPage(id, 'Dummy Test Ground', '', 'blah');
+  with Pkg.dummyPage.page do begin
+    OnActivate := @DummyTestPage_OnActivate;
+    msgLabel.Free;
+  end;
+  rc := WinRect(14, 40, (WizardForm.WelcomePage.Width*4)/5, (WizardForm.WelcomePage.Height)/2-ScaleY(35));
+  {Two phase construction: ListView_BeginCreate/ListView_FinalizeCreate to enable better configuration
+   experience}
+  Pkg.dummyPage.listView := ListView_BeginCreate(Pkg.dummyPage.page.Surface.Handle, rc);
+  with Pkg.dummyPage.listView do begin
+    behavior.OnClick := @DummyTestPage_OnClick;
+    behavior.OnChanging := @DummyTestPage_OnItemChanging;
+  end;
+  ListView_FinalizeCreate(Pkg.dummyPage.listView);
+  ListView_AddColumn(Pkg.dummyPage.listView, 0, cm('DummyPage_StateColumn'));
+  ListView_AddColumn(Pkg.dummyPage.listView, 1, cm('DummyPage_PathColumn'));
+  ListView_AddColumn(Pkg.dummyPage.listView, 2, cm('DummyPage_IdColumn'));
+  ListView_AddColumn(Pkg.dummyPage.listView, 3, cm('DummyPage_Column4'));
+  {Test data}
+  ListView_AddItem(Pkg.dummyPage.listView, 0, 'completed');
+  ListView_AddSubitem(Pkg.dummyPage.listView, 0, 1, 'c:\Program Files\MySoft\PkgCommon\');
+  ListView_AddSubitem(Pkg.dummyPage.listView, 0, 2, 'Pkg_1');
+  ListView_AddSubitem(Pkg.dummyPage.listView, 0, 3, '1.1.3.1537');
+  ListView_AddItem(Pkg.dummyPage.listView, 1, 'not required');
+  ListView_AddSubitem(Pkg.dummyPage.listView, 1, 1, 'c:\Program Files\MySoft\PkgCommon2\');
+  ListView_AddSubitem(Pkg.dummyPage.listView, 1, 2, 'Pkg_2');
+  ListView_AddSubitem(Pkg.dummyPage.listView, 1, 3, '1.1.2.15');
+  {Size the first column to the widest (tweak source to get alternate behavior)}
+  ListView_AutoSize(Pkg.dummyPage.listView);
+  Result := Pkg.dummyPage.page.ID
+end;
+
+procedure DummyTestPage_Free;
+begin
+  ListView_Free(Pkg.dummyPage.listView);
+end;
