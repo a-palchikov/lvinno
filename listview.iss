@@ -217,7 +217,6 @@ begin
   if lv.data.handle = 0 then begin
     Log(Format('ListView_WndProc: unable to match control by parent hWnd=%X', [handle]));
     Exit;
-    Result := 0;
   end;
   if msg = WM_NOTIFY then begin
     MapToNMLV(lParam, TNMLISTVIEWSIZE, lvn);
@@ -415,14 +414,11 @@ procedure ListView_AutoSize(lv: TWinListView);
 var
   r, hW, cW, lvW, i, numCols: Integer;
 begin
-  {numCols := ListView_GetColumnCount(lv);
-   for i := 0 to numCols-1 do begin}
   i := 0; {only resize the first column}
-    SendMessage(lv.data.handle, LVM_SETCOLUMNWIDTH, i, LVSCW_AUTOSIZE_USEHEADER);
-    hW := hW + SendMessage(lv.data.handle, LVM_GETCOLUMNWIDTH, i, 0);
-    SendMessage(lv.data.handle, LVM_SETCOLUMNWIDTH, i, LVSCW_AUTOSIZE);
-    cW := cW + SendMessage(lv.data.handle, LVM_GETCOLUMNWIDTH, i, 0);
-  {end;}
+  SendMessage(lv.data.handle, LVM_SETCOLUMNWIDTH, i, LVSCW_AUTOSIZE_USEHEADER);
+  hW := hW + SendMessage(lv.data.handle, LVM_GETCOLUMNWIDTH, i, 0);
+  SendMessage(lv.data.handle, LVM_SETCOLUMNWIDTH, i, LVSCW_AUTOSIZE);
+  cW := cW + SendMessage(lv.data.handle, LVM_GETCOLUMNWIDTH, i, 0);
   if hW > cW then begin
     SendMessage(lv.data.handle, LVM_SETCOLUMNWIDTH, i, hW);
     lvW := lvW + hW;
