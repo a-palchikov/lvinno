@@ -375,8 +375,8 @@ var
   r: Longint;
 begin
   with itemData do begin
-    state := LVIS_FOCUSED or LVIS_SELECTED;
-    mask := $0F;
+    stateMask := LVIS_FOCUSED or LVIS_SELECTED;
+    state := $0F;
   end;
   r := LVSendMessageItem(lv.data.handle, LVM_SETITEMSTATE, item, itemData);
   if r = -1 then
